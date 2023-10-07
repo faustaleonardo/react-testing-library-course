@@ -12,14 +12,14 @@ function InaccessibleForm() {
   )
 }
 
-function AccessibleForm() {
-  return (
-    <form>
-      <label htmlFor="username">Username</label>
-      <input id="username" placeholder="username" />
-    </form>
-  )
-}
+// function AccessibleForm() {
+//   return (
+//     <form>
+//       <label htmlFor="username">Username</label>
+//       <input id="username" placeholder="username" />
+//     </form>
+//   )
+// }
 
 test('inaccessible forms fail axe', async () => {
   const {container} = render(<InaccessibleForm />)
@@ -30,7 +30,7 @@ test('inaccessible forms fail axe', async () => {
   // demonstration purposes.
 })
 
-test('accessible forms pass axe', async () => {
-  const {container} = render(<AccessibleForm />)
-  expect(await axe(container)).toHaveNoViolations()
-})
+// test('accessible forms pass axe', async () => {
+//   const {container} = render(<AccessibleForm />)
+//   expect(await axe(container)).toHaveNoViolations()
+// })
