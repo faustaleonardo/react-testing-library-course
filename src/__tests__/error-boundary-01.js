@@ -1,25 +1,34 @@
-import * as React from 'react'
+/* eslint-disable import/no-unresolved */
+import React from 'react'
 import {render} from '@testing-library/react'
-import {reportError as mockReportError} from '../api'
-import {ErrorBoundary} from '../error-boundary'
+import {ErrorBoundary} from 'error-boundary'
+import {reportError as mockReportError} from 'api'
+import user from '@testing-library/user-event'
 
 jest.mock('../api')
+
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+afterAll(() => {
+  console.error.mockRestore()
+})
 
 afterEach(() => {
   jest.clearAllMocks()
 })
 
-function Bomb({shouldThrow}) {
+function Bomb({shouldThrow = false}) {
   if (shouldThrow) {
     throw new Error('💣')
-  } else {
-    return null
   }
+  return null
 }
 
-test('calls reportError and renders that there was a problem', () => {
-  mockReportError.mockResolvedValueOnce({success: true})
-  const {rerender} = render(
+test('calls reportError and renders that there was a problem', async () => {
+  await mockReportError.mockResolvedValueOnce({success: true})
+  const {rerender, getByText, queryByRole, queryByText} = render(
     <ErrorBoundary>
       <Bomb />
     </ErrorBoundary>,
@@ -27,7 +36,7 @@ test('calls reportError and renders that there was a problem', () => {
 
   rerender(
     <ErrorBoundary>
-      <Bomb shouldThrow={true} />
+      <Bomb shouldThrow />
     </ErrorBoundary>,
   )
 
@@ -35,19 +44,26 @@ test('calls reportError and renders that there was a problem', () => {
   const info = {componentStack: expect.stringContaining('Bomb')}
   expect(mockReportError).toHaveBeenCalledWith(error, info)
   expect(mockReportError).toHaveBeenCalledTimes(1)
-})
+  expect(console.error).toHaveBeenCalledTimes(2)
 
-// this is only here to make the error output not appear in the project's output
-// even though in the course we don't include this bit and leave it in it's incomplete state.
-beforeEach(() => {
-  jest.spyOn(console, 'error').mockImplementation(() => {})
-})
+  mockReportError.mockClear()
+  console.error.mockClear()
 
-afterEach(() => {
-  console.error.mockRestore()
+  rerender(
+    <ErrorBoundary>
+      <Bomb />
+    </ErrorBoundary>,
+  )
+  user.click(getByText(/try again?/i))
+
+  expect(mockReportError).toHaveBeenCalledTimes(0)
+  expect(console.error).toHaveBeenCalledTimes(0)
+  expect(queryByRole('alert')).not.toBeInTheDocument()
+  expect(queryByText(/try again?/i)).not.toBeInTheDocument()
 })
 
 /*
 eslint
-  jest/prefer-hooks-on-top: off
+  jest/prefer-hooks-on-top: off,
+  testing-library/prefer-screen-queries: "off"
 */
