@@ -1,17 +1,32 @@
-import * as React from 'react'
+/* eslint-disable import/no-unresolved */
+import {render as rtlRender, screen} from '@testing-library/react'
+import user from '@testing-library/user-event'
+import {Main} from 'main'
+import React from 'react'
 import {BrowserRouter} from 'react-router-dom'
-import {render, screen} from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import {Main} from '../main'
 
-test('main renders about and home and I can navigate to those pages', () => {
-  window.history.pushState({}, 'Test page', '/')
-  render(
-    <BrowserRouter>
-      <Main />
-    </BrowserRouter>,
-  )
+function render(ui, {route = '/', ...renderOptions} = {}) {
+  window.history.pushState({}, 'Test Page', route)
+
+  function Wrapper({children}) {
+    return <BrowserRouter>{children}</BrowserRouter>
+  }
+
+  return rtlRender(ui, {
+    wrapper: Wrapper,
+    ...renderOptions,
+  })
+}
+
+test('main renders home and can navigate to about page', () => {
+  render(<Main />)
+
   expect(screen.getByRole('heading')).toHaveTextContent(/home/i)
-  userEvent.click(screen.getByText(/about/i))
+  user.click(screen.getByText(/about/i))
   expect(screen.getByRole('heading')).toHaveTextContent(/about/i)
+})
+
+test('landing on a bad page shows no match component', () => {
+  render(<Main />, {route: '/something-not-found'})
+  expect(screen.getByRole('heading')).toHaveTextContent(/404/i)
 })
